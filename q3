@@ -1,0 +1,86 @@
+class TrafficAPI:
+    base_url: String
+    api_key: String
+
+    function __init__(base_url, api_key):
+        self.base_url = base_url
+        self.api_key = api_key
+
+    function fetch_traffic_data(start, end):
+        // Construct URL based on starting point, destination, and API key
+        url = self.base_url + "/maps/api/directions/json?origin=" + start + "&destination=" + end + "&key=" + self.api_key
+        // Make HTTP GET request to fetch data
+        response = http_get(url)
+        // Check if response is successful
+        if response.status_code == 200:
+            // Return the JSON data
+            return response.json()
+        else:
+            // Handle errors (e.g., print error message)
+            print("Error fetching data:", response.status_code)
+            return None
+
+class TrafficData:
+    current_conditions: String
+    travel_time: Integer
+    incidents: List
+
+    function __init__(data):
+        // Extract relevant information from the data
+        self.current_conditions = data['routes'][0]['legs'][0]['traffic_speed_entry'][0]['traffic_conditions']
+        self.travel_time = data['routes'][0]['legs'][0]['duration_in_traffic']['value']
+        self.incidents = data['routes'][0]['legs'][0]['traffic_speed_entry'][0]['incidents']
+
+class UserInterface:
+    api: TrafficAPI
+
+    function __init__(api):
+        self.api = api
+
+    function get_user_input():
+        // Prompt user for starting point
+        start = input("Enter starting point: ")
+        // Prompt user for destination
+        end = input("Enter destination: ")
+        // Return user input
+        return start, end
+
+    function display_traffic_data(traffic_data):
+        // Display current traffic conditions
+        print("Current Traffic Conditions:", traffic_data.current_conditions)
+        // Display estimated travel time
+        print("Estimated Travel Time:", traffic_data.travel_time, "seconds")
+        // Display any incidents or delays
+        if traffic_data.incidents:
+            print("Incidents/Delays:")
+            for incident in traffic_data.incidents:
+                print("-", incident)
+        else:
+            print("No incidents or delays reported.")
+
+    function run():
+        // Get user input for starting point and destination
+        start, end = self.get_user_input()
+        // Fetch traffic data from API
+        data = self.api.fetch_traffic_data(start, end)
+        // Check if data is not None
+        if data:
+            // Initialize TrafficData with data
+            traffic_data = TrafficData(data)
+            // Display traffic data to user
+            self.display_traffic_data(traffic_data)
+        else:
+            // Handle case when no data is found
+            print("No data found for the route from", start, "to", end)
+
+# Main program execution
+function main():
+    // Initialize the API with the base URL and API key
+    api = TrafficAPI(base_url="https://maps.googleapis.com", api_key="YOUR_API_KEY")
+    // Create the user interface with the API
+    ui = UserInterface(api)
+    // Run the application
+    ui.run()
+
+// Start the program
+main()
